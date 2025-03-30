@@ -18,7 +18,7 @@ def ler_arquivo(arquivo):
                 j -= 1
             if j+1 < i:  #algo entre x e o coeficiente
                 valor_coef = funcao[j+1:i]
-                # Verificar se coeficiente_str é um número válido antes de convertê-lo
+                # Verificar se valor_coef é um número válido antes de convertê-lo
                 if valor_coef and valor_coef not in ['+', '-']:
                     coeficiente = int(valor_coef)
                 elif valor_coef == '-':
