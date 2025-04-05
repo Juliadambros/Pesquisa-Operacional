@@ -41,20 +41,20 @@ def ler_arquivo(arquivo):
 
         if ">=" in linha:
             operador = ">="
-            lhs, rhs = linha.split(">=")
+            coefE, coefD = linha.split(">=")
         elif "<=" in linha:
             operador = "<="
-            lhs, rhs = linha.split("<=")
+            coefE, coefD = linha.split("<=")
         elif "=" in linha:
             operador = "="
-            lhs, rhs = linha.split("=")
+            coefE, coefD = linha.split("=")
         else:
             continue
 
-        partes = extrair_termos(lhs.strip())
-        resultado = int(rhs.strip())
+        partes = extrair_termos(coefE.strip())
+        resultado = int(coefD.strip())
 
-        # Matriz original: apenas variáveis reais + resultado
+        # Matriz original:
         linha_original = [0] * quantidade_variaveis
         for coef, var in partes:
             linha_original[var - 1] = coef
@@ -84,8 +84,6 @@ def ler_arquivo(arquivo):
 
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original
 
-
-# Execução principal
 arquivo = "exercicio.txt"
 matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original = ler_arquivo(arquivo)
 
@@ -102,8 +100,4 @@ for coef in vetor_b:
     print(f"[{coef}]")
 
 print("Vetor C:", vetor_c)
-
 print("Tipo de otimização:", tipo_otimizacao)
-
-# Verifica se matriz_original é quadrada (desconsiderando última coluna)? 
-
