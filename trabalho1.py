@@ -1,117 +1,109 @@
-def ler_arquivo(arquivo):
-    with open(arquivo, 'r') as arquivo:
-        linhas = arquivo.readlines()  
-    
-    primeira_linha = linhas[0].lower()  
-    # lower serve para que não tenha problema em letras Maiúsculas ou Minúsculas
-    tipo_otimizacao = "max" if "max" in primeira_linha else "min"
-    
-    funcao = primeira_linha.split('=')[1].strip() # split separa a primeira linha para o vetor C (valores depois do =), strip tira os espaços vazios
-    termos = [] #onde os coeficientes e variaveis são guardados para o vetor C
-    i = 0
-    while i < len(funcao):
-        if funcao[i] == 'x':  
-            coeficiente = 1
-            j = i - 1
-            # Procurando pelo coeficiente
-            while j >= 0 and (funcao[j] == '+' or funcao[j] == '-' or funcao[j].isdigit()):
-                j -= 1
-            if j+1 < i:  #algo entre x e o coeficiente
-                valor_coef = funcao[j+1:i]
-                # Verificar se valor_coef é um número válido antes de convertê-lo
-                if valor_coef and valor_coef not in ['+', '-']:
-                    coeficiente = int(valor_coef)
-                elif valor_coef == '-':
-                    coeficiente = -1
-                elif valor_coef == '+':
-                    coeficiente = 1
-            #if funcao[j + 1:i] == '-' and coeficiente == 1:  # Se for 'x' sem coeficiente, assume -1
-            #    coeficiente = -1
+import re
 
-            termos.append((coeficiente, int(funcao[i+1])))
-            i += 2  #próximo termo
+def extrair_termos(expr):
+    expr = expr.replace(" ", "")
+    matches = re.findall(r'([+-]?[\d]*)(x\d+)', expr)
+    termos = []
+    for coef_str, var_str in matches:
+        if coef_str in ['', '+']:
+            coef = 1
+        elif coef_str == '-':
+            coef = -1
         else:
-            i += 1
-    
-    quantidade_variaveis = max(termo[1] for termo in termos)
+            coef = int(coef_str)
+        var = int(var_str[1:])
+        termos.append((coef, var))
+    return termos
+
+def ler_arquivo(arquivo): 
+    with open(arquivo, 'r') as arquivo:
+        linhas = arquivo.readlines()
+
+    primeira_linha = linhas[0].lower()
+    tipo_otimizacao = "max" if "max" in primeira_linha else "min"
+    funcao = primeira_linha.split('=')[1].strip()
+
+    termos = extrair_termos(funcao)
+    quantidade_variaveis = max(var for _, var in termos)
     vetor_c = [0] * quantidade_variaveis
-    
-    for coeficiente, variavel in termos:
-        vetor_c[variavel - 1] = coeficiente
-    print(termos)
+    for coef, var in termos:
+        vetor_c[var - 1] = coef
+
     matriz_A = []
+    matriz_original = []
     vetor_b = []
     variaveis_folga = 0
-    
+
     for linha in linhas[1:]:
         linha = linha.strip()
-        if not linha:  #ignora linhas vazias
+        if not linha:
             continue
-        
-        partes = [] #onde os coeficientes e variaveis são guardados para a matriz A
-        i = 0
-        while i < len(linha):
-            if linha[i] == 'x': 
-                coeficiente = 1
-                j = i - 1
-                while j >= 0 and (linha[j] == '+' or linha[j] == '-' or linha[j].isdigit()):
-                    j -= 1
-                if j+1 < i: 
-                    valor_coef = linha[j+1:i]
-                    if valor_coef and valor_coef not in ['+', '-']:
-                        coeficiente = int(valor_coef)
-                    elif valor_coef == '-':
-                        coeficiente = -1
-                    elif valor_coef == '+':
-                        coeficiente = 1
-                partes.append((coeficiente, int(linha[i+1])))
-                i += 2  
-            else:
-                i += 1
-        
-        operador = ''
-        if '>=' in linha:
-            operador = '>='
-        elif '<=' in linha:
-            operador = '<='
-        elif '=' in linha:
-            operador = '='
-        
-        resultado = 0  #para o vetor b
-        for j in range(len(linha) - 1, -1, -1): #equação de traz para frente
-            if linha[j].isdigit() or linha[j] == '+' or linha[j] == '-':
-                resultado = int(linha[j:])
-                break
-        
-        equacao = [0] * (quantidade_variaveis + variaveis_folga)
-        for coeficiente, variavel in partes:
-            equacao[variavel - 1] = coeficiente
-        
-        if operador == '>=':
-            equacao.append(-1)  
-        elif operador == '<=':
-            equacao.append(1)   
+
+        if ">=" in linha:
+            operador = ">="
+            lhs, rhs = linha.split(">=")
+        elif "<=" in linha:
+            operador = "<="
+            lhs, rhs = linha.split("<=")
+        elif "=" in linha:
+            operador = "="
+            lhs, rhs = linha.split("=")
         else:
-            equacao.append(0) 
-        
+            continue
+
+        partes = extrair_termos(lhs.strip())
+        resultado = int(rhs.strip())
+
+        # Matriz original: apenas variáveis reais + resultado
+        linha_original = [0] * quantidade_variaveis
+        for coef, var in partes:
+            linha_original[var - 1] = coef
+        matriz_original.append(linha_original + [resultado])  # Inclui o vetor_b
+
+        # Matriz A com folgas
+        equacao = [0] * (quantidade_variaveis + variaveis_folga)
+        for coef, var in partes:
+            equacao[var - 1] = coef
+
+        if operador == ">=":
+            equacao.append(-1)
+        elif operador == "<=":
+            equacao.append(1)
+        else:
+            equacao.append(0)
+
         matriz_A.append(equacao)
-        variaveis_folga += 1
         vetor_b.append(resultado)
-    
-    # arrumar a matriz A e vetor C com variáveis de folga
+        variaveis_folga += 1
+
     for linha in matriz_A:
         while len(linha) < quantidade_variaveis + variaveis_folga:
             linha.append(0)
-    
-    vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
-    
-    return matriz_A, vetor_b, vetor_c, tipo_otimizacao
 
+    vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
+
+    return matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original
+
+
+# Execução principal
 arquivo = "exercicio.txt"
-matriz_A, vetor_b, vetor_c, tipo_otimizacao = ler_arquivo(arquivo)
-print("Matriz A:")
+matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original = ler_arquivo(arquivo)
+
+print("Matriz A (com folgas):")
 for linha in matriz_A:
     print(linha)
-print("Vetor b:", vetor_b)
+
+print("\nMatriz original:")
+for linha in matriz_original:
+    print(linha)
+
+print("\nVetor b:")
+for coef in vetor_b:
+    print(f"[{coef}]")
+
 print("Vetor C:", vetor_c)
+
 print("Tipo de otimização:", tipo_otimizacao)
+
+# Verifica se matriz_original é quadrada (desconsiderando última coluna)? 
+
