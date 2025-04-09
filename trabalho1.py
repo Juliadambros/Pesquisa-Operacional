@@ -1,5 +1,5 @@
 import re
-
+#arrumar que ele estpa lendo letras
 def extrair_termos(expr):
     expr = expr.replace(" ", "")
     matches = re.findall(r'([+-]?[\d]*)(x\d+)', expr)
@@ -54,17 +54,12 @@ def ler_arquivo(arquivo):
         partes = extrair_termos(coefE.strip())
         resultado = int(coefD.strip())
 
-        # Matriz original:
-        linha_original = [0] * quantidade_variaveis
-        for coef, var in partes:
-            linha_original[var - 1] = coef
-        matriz_original.append(linha_original + [resultado])  # Inclui o vetor_b
-
-        # Matriz A com folgas
+        # Monta a linha da matriz A
         equacao = [0] * (quantidade_variaveis + variaveis_folga)
         for coef, var in partes:
             equacao[var - 1] = coef
 
+        # Adiciona a variável de folga
         if operador == ">=":
             equacao.append(-1)
         elif operador == "<=":
@@ -76,6 +71,7 @@ def ler_arquivo(arquivo):
         vetor_b.append(resultado)
         variaveis_folga += 1
 
+    # Preenche com zeros para alinhar o tamanho das colunas
     for linha in matriz_A:
         while len(linha) < quantidade_variaveis + variaveis_folga:
             linha.append(0)
@@ -84,15 +80,54 @@ def ler_arquivo(arquivo):
 
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original
 
+def determinante_laplace(matriz):
+    if len(matriz) == 1:
+        return matriz[0][0]
+    if len(matriz) == 2:
+        return matriz[0][0]*matriz[1][1] - matriz[0][1]*matriz[1][0]
+
+    det = 0
+    for j in range(len(matriz[0])):
+        submatriz = [linha[:j] + linha[j+1:] for linha in matriz[1:]]
+        cofator = ((-1) ** j) * matriz[0][j] * determinante_laplace(submatriz)
+        det += cofator
+    return det
+
+def matriz_inversa(matriz):
+    det = determinante_laplace(matriz)
+    if det == 0:
+        return None
+
+    tamanho = len(matriz)
+    cofatores = []
+    for i in range(tamanho):
+        linha_cofatores = []
+        for j in range(tamanho):
+            submatriz = [linha[:j] + linha[j+1:] for k, linha in enumerate(matriz) if k != i]
+            cof = ((-1) ** (i + j)) * determinante_laplace(submatriz)
+            linha_cofatores.append(cof)
+        cofatores.append(linha_cofatores)
+
+    # Transposta dos cofatores (matriz adjunta)
+    cofatores_T = list(map(list, zip(*cofatores)))
+    inversa = [[cofatores_T[i][j] / det for j in range(tamanho)] for i in range(tamanho)]
+    return inversa
+
+def obter_submatriz_quadrada(matriz):
+    linhas = len(matriz)
+    colunas = len(matriz[0])
+    if linhas == colunas:
+        return matriz
+    elif colunas >= linhas:
+        return [linha[:linhas] for linha in matriz]
+    else:
+        raise ValueError("Não é possível formar submatriz quadrada (mais linhas que colunas).")
+
 arquivo = "exercicio.txt"
-matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original = ler_arquivo(arquivo)
+matriz_A, vetor_b, vetor_c, tipo_otimizacao = ler_arquivo(arquivo)
 
 print("Matriz A (com folgas):")
 for linha in matriz_A:
-    print(linha)
-
-print("\nMatriz original:")
-for linha in matriz_original:
     print(linha)
 
 print("\nVetor b:")
@@ -101,3 +136,23 @@ for coef in vetor_b:
 
 print("Vetor C:", vetor_c)
 print("Tipo de otimização:", tipo_otimizacao)
+
+try:
+    submatriz = obter_submatriz_quadrada(matriz_A)
+    print("\nSubmatriz quadrada de A:")
+    for linha in submatriz:
+        print(linha)
+
+    det = determinante_laplace(submatriz)
+    print("\nDeterminante (por Laplace):", det)
+
+    if det != 0:
+        inversa = matriz_inversa(submatriz)
+        print("\nMatriz Inversa:")
+        for linha in inversa:
+            print(["{:.2f}".format(x) for x in linha])
+    else:
+        print("\nA matriz não possui inversa (determinante = 0).")
+
+except ValueError as e:
+    print("Erro ao extrair submatriz quadrada:", e)
