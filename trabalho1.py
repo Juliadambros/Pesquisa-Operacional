@@ -102,23 +102,37 @@ def determinante_laplace(matriz):
     return det
 
 def matriz_inversa(matriz):
-    det = determinante_laplace(matriz)
-    if det == 0:
-        return None
+    n = len(matriz)
+    
+    # Cria uma matriz identidade do mesmo tamanho
+    identidade = [[float(i == j) for j in range(n)] for i in range(n)]
 
-    tamanho = len(matriz)
-    cofatores = []
-    for i in range(tamanho):
-        linha_cofatores = []
-        for j in range(tamanho):
-            matrizB = [linha[:j] + linha[j+1:] for k, linha in enumerate(matriz) if k != i]
-            cof = ((-1) ** (i + j)) * determinante_laplace(matrizB)
-            linha_cofatores.append(cof)
-        cofatores.append(linha_cofatores)
+    # Faz uma cópia da matriz original para não modificar a entrada
+    matriz_ampliada = [linha[:] + identidade[i][:] for i, linha in enumerate(matriz)]
 
-    # Transposta dos cofatores (matriz adjunta)
-    cofatores_T = list(map(list, zip(*cofatores)))
-    inversa = [[cofatores_T[i][j] / det for j in range(tamanho)] for i in range(tamanho)]
+    for i in range(n):
+        # Verifica se o pivô é zero e tenta permutar linhas
+        if matriz_ampliada[i][i] == 0:
+            for k in range(i + 1, n):
+                if matriz_ampliada[k][i] != 0:
+                    matriz_ampliada[i], matriz_ampliada[k] = matriz_ampliada[k], matriz_ampliada[i]
+                    break
+            else:
+                return None  # Não é invertível
+
+        # Normaliza a linha do pivô
+        fator = matriz_ampliada[i][i]
+        for j in range(2 * n):
+            matriz_ampliada[i][j] /= fator
+
+        # Zera os outros elementos da coluna
+        for k in range(n):
+            if k != i:
+                fator = matriz_ampliada[k][i]
+                for j in range(2 * n):
+                    matriz_ampliada[k][j] -= fator * matriz_ampliada[i][j]
+
+    inversa = [linha[n:] for linha in matriz_ampliada]
     return inversa
 
 def matrizB(matriz):
