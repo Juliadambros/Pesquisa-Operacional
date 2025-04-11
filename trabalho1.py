@@ -1,16 +1,21 @@
 import re
-#arrumar que ele estpa lendo letras
+
 def extrair_termos(expr):
-    expr = expr.replace(" ", "")
-    matches = re.findall(r'([+-]?[\d]*)(x\d+)', expr)
+    expr = expr.replace(" ", "").replace(",", ".")
+
+    if re.search(r'[a-wy-zA-WY-Z]', expr):  # ignora 'x', mas bloqueia outras letras
+        raise ValueError("Expressão contém variáveis inválidas. Use apenas 'x' seguido de número.")
+
+    matches = re.findall(r'([+-]?\d*\.?\d*)(x\d+)', expr)
+
     termos = []
     for coef_str, var_str in matches:
         if coef_str in ['', '+']:
-            coef = 1
+            coef = 1.0
         elif coef_str == '-':
-            coef = -1
+            coef = -1.0
         else:
-            coef = int(coef_str)
+            coef = float(coef_str)
         var = int(var_str[1:])
         termos.append((coef, var))
     return termos
@@ -30,7 +35,6 @@ def ler_arquivo(arquivo):
         vetor_c[var - 1] = coef
 
     matriz_A = []
-    matriz_original = []
     vetor_b = []
     variaveis_folga = 0
 
@@ -52,7 +56,11 @@ def ler_arquivo(arquivo):
             continue
 
         partes = extrair_termos(coefE.strip())
-        resultado = int(coefD.strip())
+        resultado = coefD.strip().replace(',', '.')  
+        try:
+            resultado = float(resultado)
+        except ValueError:
+            raise ValueError(f"Valor numérico inválido: {resultado}")
 
         # Monta a linha da matriz A
         equacao = [0] * (quantidade_variaveis + variaveis_folga)
@@ -78,7 +86,7 @@ def ler_arquivo(arquivo):
 
     vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
 
-    return matriz_A, vetor_b, vetor_c, tipo_otimizacao, matriz_original
+    return matriz_A, vetor_b, vetor_c, tipo_otimizacao
 
 def determinante_laplace(matriz):
     if len(matriz) == 1:
@@ -88,8 +96,8 @@ def determinante_laplace(matriz):
 
     det = 0
     for j in range(len(matriz[0])):
-        submatriz = [linha[:j] + linha[j+1:] for linha in matriz[1:]]
-        cofator = ((-1) ** j) * matriz[0][j] * determinante_laplace(submatriz)
+        matrizB = [linha[:j] + linha[j+1:] for linha in matriz[1:]]
+        cofator = ((-1) ** j) * matriz[0][j] * determinante_laplace(matrizB)
         det += cofator
     return det
 
@@ -103,8 +111,8 @@ def matriz_inversa(matriz):
     for i in range(tamanho):
         linha_cofatores = []
         for j in range(tamanho):
-            submatriz = [linha[:j] + linha[j+1:] for k, linha in enumerate(matriz) if k != i]
-            cof = ((-1) ** (i + j)) * determinante_laplace(submatriz)
+            matrizB = [linha[:j] + linha[j+1:] for k, linha in enumerate(matriz) if k != i]
+            cof = ((-1) ** (i + j)) * determinante_laplace(matrizB)
             linha_cofatores.append(cof)
         cofatores.append(linha_cofatores)
 
@@ -113,7 +121,7 @@ def matriz_inversa(matriz):
     inversa = [[cofatores_T[i][j] / det for j in range(tamanho)] for i in range(tamanho)]
     return inversa
 
-def obter_submatriz_quadrada(matriz):
+def matrizB(matriz):
     linhas = len(matriz)
     colunas = len(matriz[0])
     if linhas == colunas:
@@ -138,16 +146,16 @@ print("Vetor C:", vetor_c)
 print("Tipo de otimização:", tipo_otimizacao)
 
 try:
-    submatriz = obter_submatriz_quadrada(matriz_A)
-    print("\nSubmatriz quadrada de A:")
-    for linha in submatriz:
+    matrizB = matrizB(matriz_A)
+    print("\nMatriz B:")
+    for linha in matrizB:
         print(linha)
 
-    det = determinante_laplace(submatriz)
+    det = determinante_laplace(matrizB)
     print("\nDeterminante (por Laplace):", det)
 
     if det != 0:
-        inversa = matriz_inversa(submatriz)
+        inversa = matriz_inversa(matrizB)
         print("\nMatriz Inversa:")
         for linha in inversa:
             print(["{:.2f}".format(x) for x in linha])
