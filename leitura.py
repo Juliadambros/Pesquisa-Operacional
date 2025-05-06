@@ -1,6 +1,5 @@
 import re
 
-# Função para extrair os termos da expressão da função objetivo
 def extrair_termos(expr):
     expr = expr.replace(" ", "").replace(",", ".")
 

@@ -1,12 +1,11 @@
 from matriz import ler_arquivo, calcular_determinante, calcular_inversa, separar_B_N
 from leitura import extrair_termos
+from simplex import primeira_interacao
 
 def main():
-    # Leitura do arquivo
     arquivo = "exercicio.txt"
     matriz_A, vetor_b, vetor_c, tipo_otimizacao = ler_arquivo(arquivo)
 
-    # Exibição das matrizes
     print("Matriz A (com folgas):")
     for linha in matriz_A:
         print(linha)
@@ -19,8 +18,7 @@ def main():
     print("Tipo de otimização:", tipo_otimizacao)
 
     try:
-        # Cálculo da matriz B e do determinante
-        Bmatriz = matriz_A  # Exemplo de B, pode ser extraído conforme a necessidade
+        Bmatriz = matriz_A 
 
         det = calcular_determinante(Bmatriz)
         print("\nDeterminante (por Laplace):", det)
@@ -37,7 +35,6 @@ def main():
     except ValueError as e:
         print("Erro ao extrair submatriz quadrada:", e)
 
-    # Separando B e N
     num_restricoes = len(vetor_b)
     B, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
 
@@ -55,6 +52,9 @@ def main():
     print("\nMatriz N (variáveis não básicas):")
     for linha in N:
         print(linha)
+    
+    # Realizar a primeira interação do método Simplex
+    primeira_interacao(B, N, vetor_b, vetor_c, indices_B, indices_N)
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,6 @@ import re
 import random
 from leitura import extrair_termos
 
-# Função para ler o arquivo e processar os dados
 def ler_arquivo(arquivo): 
     with open(arquivo, 'r') as arquivo:
         linhas = arquivo.readlines()
@@ -71,8 +70,11 @@ def ler_arquivo(arquivo):
 
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao
 
-# Função para calcular o determinante por Laplace
+#  determinante por Laplace
 def calcular_determinante(matriz):
+    if not matriz or any(len(linha) != len(matriz) for linha in matriz):
+        raise ValueError("A matriz deve ser quadrada para calcular o determinante.")
+    
     if len(matriz) == 1:
         return matriz[0][0]
     if len(matriz) == 2:
@@ -85,7 +87,6 @@ def calcular_determinante(matriz):
         det += cofator
     return det
 
-# Função para calcular a inversa da matriz
 def calcular_inversa(matriz):
     n = len(matriz)
     
@@ -120,7 +121,6 @@ def calcular_inversa(matriz):
     inversa = [linha[n:] for linha in matriz_ampliada]
     return inversa
 
-# Função para separar as matrizes B e N
 def separar_B_N(matriz_A, num_restricoes):
     num_colunas = len(matriz_A[0])
     num_variaveis_originais = num_colunas - num_restricoes
@@ -142,3 +142,16 @@ def separar_B_N(matriz_A, num_restricoes):
     N = list(map(list, zip(*N)))
 
     return B, N, indices_B, indices_N
+
+def multiplicar_matriz(A, B):
+    if len(A[0]) != len(B):
+        raise ValueError("Número de colunas da primeira matriz deve ser igual ao número de linhas da segunda matriz.")
+    
+    resultado = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
+
+    for i in range(len(A)):
+        for j in range(len(B[0])):
+            for k in range(len(B)):
+                resultado[i][j] += A[i][k] * B[k][j]
+    
+    return resultado
