@@ -72,6 +72,7 @@ def ler_arquivo(arquivo):
 
 #  determinante por Laplace
 def calcular_determinante(matriz):
+    #determinante tem que ser com a matriz basica 
     if not matriz or any(len(linha) != len(matriz) for linha in matriz):
         raise ValueError("A matriz deve ser quadrada para calcular o determinante.")
     
@@ -126,7 +127,7 @@ def separar_B_N(matriz_A, num_restricoes):
     num_variaveis_originais = num_colunas - num_restricoes
 
     matriz_transposta = list(map(list, zip(*matriz_A)))
-
+    #randomico não tá fazendo seu trabalho
     # Índices das variáveis básicas (aleatoriamente escolhidas entre as colunas restantes)
     indices_B = random.sample(range(num_variaveis_originais, num_colunas), num_restricoes)
 
@@ -134,14 +135,14 @@ def separar_B_N(matriz_A, num_restricoes):
     indices_N = [i for i in range(num_variaveis_originais) if i not in indices_B]
 
     # Separar as colunas em B e N
-    B = [list(matriz_transposta[i]) for i in indices_B]
+    Basica = [list(matriz_transposta[i]) for i in indices_B]
     N = [list(matriz_transposta[i]) for i in indices_N]
 
     # Voltar para o formato original
-    B = list(map(list, zip(*B)))
+    Basica = list(map(list, zip(*Basica)))
     N = list(map(list, zip(*N)))
 
-    return B, N, indices_B, indices_N
+    return Basica, N, indices_B, indices_N
 
 def multiplicar_matriz(A, B):
     if len(A[0]) != len(B):

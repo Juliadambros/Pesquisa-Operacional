@@ -1,11 +1,15 @@
-from matriz import calcular_inversa, multiplicar_matriz
+from matriz import calcular_inversa, multiplicar_matriz, separar_B_N, ler_arquivo
 import random
 
-def primeira_interacao(B, N, vetor_b, vetor_c, indices_B, indices_N):
+def primeira_interacao(Basica, N, vetor_b, vetor_c, indices_B, indices_N):
     print("\n========== Início Simplex ==========")
-
+    arquivo = "exercicio.txt"
+    matriz_A, vetor_b, vetor_c, tipo_otimizacao = ler_arquivo(arquivo)
+    num_restricoes = len(vetor_b)
+    Basica, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
+    
     # Passo 1: x̂B = B⁻¹ * b
-    B_inv = calcular_inversa(B)
+    B_inv = calcular_inversa(Basica)
     if B_inv is None:
         print("Matriz B não é invertível. Não é possível prosseguir.")
         return
