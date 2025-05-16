@@ -56,16 +56,3 @@ def ler_arquivo(arquivo):
     vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao
 
-def preparar_fase_1(matriz_A, vetor_b, vetor_c, tipo_otimizacao):
-    if tipo_otimizacao == "max":
-        vetor_c = [-coef for coef in vetor_c]
-
-    for i in range(len(vetor_b)):
-        if vetor_b[i] < 0:
-            matriz_A[i] = [-coef for coef in matriz_A[i]]
-            vetor_b[i] = -vetor_b[i]
-
-    for linha in matriz_A:
-        if linha[-1] != 0:
-            return True
-    return False

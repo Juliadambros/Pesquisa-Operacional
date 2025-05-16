@@ -22,4 +22,4 @@ def resolver_simplex(arquivo):
     fase_2_simplex(matriz_A, vetor_b, vetor_c, indices_B, tipo_otimizacao)
 
 if __name__ == "__main__":
-    resolver_simplex("exercicio.txt")
+    resolver_simplex("Algoritmo Simplex/teste.txt")

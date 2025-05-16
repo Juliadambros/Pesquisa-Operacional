@@ -60,9 +60,6 @@ def fase_1_simplex(matriz_A, vetor_b, vetor_c, tipo_otimizacao):
     for i in range(num_variaveis, num_variaveis_totais):
         vetor_c_aux[i] = 1  # Minimizar a soma das variáveis artificiais
     
-    # Separar matriz básica B e não-básica N
-    B, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
-    
     print("\n[FASE 1] Início da Fase 1")
     print("Matriz A com artificiais:")
     for linha in matriz_A:
@@ -74,8 +71,27 @@ def fase_1_simplex(matriz_A, vetor_b, vetor_c, tipo_otimizacao):
     while True:
         iteracao += 1
         print(f"\nIteração {iteracao}:")
-        
-        B, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
+
+        # Tentativas para garantir base com determinante diferente de zero
+        tentativas = 0
+        while True:
+            B, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
+            det_B = calcular_determinante(B)
+            if det_B != 0:
+                break
+            else:
+                tentativas += 1
+                print(f"Tentativa {tentativas}: base com determinante zero. Sorteando nova base...")
+                if tentativas > 100:
+                    print("Não foi possível encontrar uma base viável com determinante diferente de zero.")
+                    return None
+                # embaralha os índices das colunas para nova base
+                indices = list(range(len(matriz_A[0])))
+                random.shuffle(indices)
+                # reorganiza matriz_A de acordo com a nova ordem
+                matriz_A = [[linha[i] for i in indices] for linha in matriz_A]
+                vetor_c_aux = [vetor_c_aux[i] for i in indices]
+
         B_inv = calcular_inversa(B)
         xB = multiplicar_matrizes(B_inv, [[bi] for bi in vetor_b])  # xB = B⁻¹b
 
@@ -136,17 +152,37 @@ def fase_2_simplex(matriz_A, vetor_b, vetor_c, indices_B, tipo_otimizacao):
     num_restricoes = len(matriz_A)
     num_variaveis = len(matriz_A[0])
     
-    indices_N = [i for i in range(num_variaveis) if i not in indices_B]
-    
     iteracao = 0
     while True:
         iteracao += 1
         print(f"\n[FASE 2] Iteração {iteracao}")
+
+        # Atualiza os índices não básicos
+        indices_N = [i for i in range(num_variaveis) if i not in indices_B]
         
-        # Montar matrizes B e N com base nos índices
+        # Verificação do determinante da base
+        tentativas = 0
+        while True:
+            B = [[matriz_A[i][j] for j in indices_B] for i in range(num_restricoes)]
+            det_B = calcular_determinante(B)
+            if det_B != 0:
+                break
+            else:
+                tentativas += 1
+                print(f"Tentativa {tentativas}: base com determinante zero. Sorteando nova base...")
+                if tentativas > 100:
+                    print("Não foi possível encontrar uma base viável com determinante diferente de zero.")
+                    return None
+                # Sorteia uma nova base viável
+                todos_indices = list(range(num_variaveis))
+                random.shuffle(todos_indices)
+                indices_B = todos_indices[:num_restricoes]
+                indices_N = [i for i in todos_indices if i not in indices_B]
+
+        # Montar matrizes B e N
         B = [[matriz_A[i][j] for j in indices_B] for i in range(num_restricoes)]
         N = [[matriz_A[i][j] for j in indices_N] for i in range(num_restricoes)]
-        
+
         B_inv = calcular_inversa(B)
         xB = multiplicar_matrizes(B_inv, [[bi] for bi in vetor_b])
 
