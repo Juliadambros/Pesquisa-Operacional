@@ -1,4 +1,3 @@
-# main.py
 from leitura import ler_arquivo
 from simplex import simplex
 
@@ -18,7 +17,6 @@ def resolver_simplex(arquivo):
     print(tipos_restricao)
     print("-------------------------\n")
 
-    # Transforma max em min, se necessário
     if tipo_otimizacao == "max":
         vetor_c = [-c for c in vetor_c]
 

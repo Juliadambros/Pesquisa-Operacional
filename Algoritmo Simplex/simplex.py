@@ -1,8 +1,6 @@
-# simplex.py
 import random
 from matrizes import calcular_determinante, calcular_inversa, multiplicar_matrizes
 
-# Escolhe uma base viável aleatória com determinante diferente de zero
 def escolher_base_valida(matriz_A, tamanho_base, tentativas_invalidas):
     colunas_totais = list(range(len(matriz_A[0])))
     tentativas = 0
@@ -28,7 +26,7 @@ def escolher_base_valida(matriz_A, tamanho_base, tentativas_invalidas):
             if tentativas > 100:
                 raise ValueError("Não foi possível encontrar uma base viável.")
 
-# Resolve o sistema Bx = b manualmente usando a inversa
+# Resolve o sistema Bx = b  usando a inversa
 def resolver_sistema(B, b):
     B_inv = calcular_inversa(B)
     x = multiplicar_matrizes(B_inv, [[bi] for bi in b])
