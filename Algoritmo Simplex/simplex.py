@@ -1,241 +1,132 @@
+# simplex.py
 import random
 from matrizes import calcular_determinante, calcular_inversa, multiplicar_matrizes
 
-def separar_B_N(matriz_A, num_restricoes):
-    num_colunas = len(matriz_A[0])
-    num_variaveis_originais = num_colunas - num_restricoes
-    indices_possiveis = list(range(num_variaveis_originais, num_colunas))
+# Escolhe uma base viável aleatória com determinante diferente de zero
+def escolher_base_valida(matriz_A, tamanho_base, tentativas_invalidas):
+    colunas_totais = list(range(len(matriz_A[0])))
+    tentativas = 0
 
-    indices_B = random.sample(indices_possiveis, num_restricoes)
-    indices_N = [i for i in range(num_colunas) if i not in indices_B]
-
-    B = [[linha[j] for j in indices_B] for linha in matriz_A]
-    N = [[linha[j] for j in indices_N] for linha in matriz_A]
-    return B, N, indices_B, indices_N
-
-# Função para verificar e preparar o problema para a Fase 1 ou 2
-def preparar_fase_1(matriz_A, vetor_b, vetor_c, tipo_otimizacao):
-    if tipo_otimizacao == "max":
-        print("Transformando o problema de maximização para minimização...")
-        vetor_c = [-coef for coef in vetor_c]  # Inverte os coeficientes da função objetivo
-        print(vetor_c)
-
-    for i in range(len(vetor_b)):
-        if vetor_b[i] < 0:
-            print(f"Valor b[{i}] é negativo. Multiplicando a restrição por -1...")
-            matriz_A[i] = [-coef for coef in matriz_A[i]]
-            vetor_b[i] = -vetor_b[i]
-
-    # Verificar se há desigualdades ">=, >, =" que requerem a Fase I
-    for linha in matriz_A:
-        if linha[-1] != 0:
-            print("Existem desigualdades que exigem a Fase I.")
-            return True  # Requer Fase I
-
-    print("Nenhuma restrição exige a Fase I. Podemos ir diretamente para a Fase II.")
-    return False
-
-def fase_1_simplex(matriz_A, vetor_b, vetor_c, tipo_otimizacao):
-    num_restricoes = len(matriz_A)
-    num_variaveis = len(matriz_A[0])
-    
-    # Identificar as linhas que precisam de variáveis artificiais
-    indices_artificiais = []
-    for i in range(num_restricoes):
-        if matriz_A[i][-1] != 1:  # só folga não resolve, ou é = ou >=
-            indices_artificiais.append(i)
-    
-    # Adiciona variáveis artificiais
-    for i in range(num_restricoes):
-        for j in range(len(matriz_A)):
-            if j == i:
-                matriz_A[j].append(1 if i in indices_artificiais else 0)
-            else:
-                matriz_A[j].append(0)
-    
-    num_variaveis_totais = len(matriz_A[0])
-    
-    # Criar vetor de custo auxiliar (função objetivo da fase 1)
-    vetor_c_aux = [0] * num_variaveis_totais
-    for i in range(num_variaveis, num_variaveis_totais):
-        vetor_c_aux[i] = 1  # Minimizar a soma das variáveis artificiais
-    
-    print("\n[FASE 1] Início da Fase 1")
-    print("Matriz A com artificiais:")
-    for linha in matriz_A:
-        print(linha)
-    print("Vetor b:", vetor_b)
-    print("Vetor c auxiliar:", vetor_c_aux)
-
-    iteracao = 0
     while True:
-        iteracao += 1
-        print(f"\nIteração {iteracao}:")
+        base = tuple(sorted(random.sample(colunas_totais, tamanho_base)))
+        if base in tentativas_invalidas:
+            continue
 
-        # Tentativas para garantir base com determinante diferente de zero
-        tentativas = 0
-        while True:
-            B, N, indices_B, indices_N = separar_B_N(matriz_A, num_restricoes)
-            det_B = calcular_determinante(B)
-            if det_B != 0:
-                break
-            else:
-                tentativas += 1
-                print(f"Tentativa {tentativas}: base com determinante zero. Sorteando nova base...")
-                if tentativas > 100:
-                    print("Não foi possível encontrar uma base viável com determinante diferente de zero.")
-                    return None
-                # embaralha os índices das colunas para nova base
-                indices = list(range(len(matriz_A[0])))
-                random.shuffle(indices)
-                # reorganiza matriz_A de acordo com a nova ordem
-                matriz_A = [[linha[i] for i in indices] for linha in matriz_A]
-                vetor_c_aux = [vetor_c_aux[i] for i in indices]
+        B = [[linha[i] for i in base] for linha in matriz_A]
+        if len(B) != len(B[0]):
+            tentativas_invalidas.add(base)
+            continue
 
-        B_inv = calcular_inversa(B)
-        xB = multiplicar_matrizes(B_inv, [[bi] for bi in vetor_b])  # xB = B⁻¹b
+        det = calcular_determinante(B)
+        print(f"Tentativa de base: {base}, Determinante = {det}")
 
-        custo_B = [vetor_c_aux[i] for i in indices_B]
-        custo_B_matriz = [[c] for c in custo_B]
-        
-        # c_B^T * B⁻¹
-        yT = multiplicar_matrizes([custo_B], B_inv)
-        
-        # Calcula os custos reduzidos: c_N - y^T * N
-        cN = [vetor_c_aux[i] for i in indices_N]
-        yT_N = multiplicar_matrizes(yT, N)
-        custo_reduzido = [cN[i] - yT_N[0][i] for i in range(len(indices_N))]
-
-        print("Custo reduzido:", custo_reduzido)
-
-        # Verifica otimalidade
-        if all(cr >= 0 for cr in custo_reduzido):
-            print("Solução ótima da Fase 1 encontrada.")
-            valor_otimo = sum(vetor_c_aux[indices_B[i]] * xB[i][0] for i in range(len(indices_B)))
-            print("Valor ótimo auxiliar:", valor_otimo)
-            if valor_otimo > 0:
-                print("Problema original é inviável.")
-                return None
-            else:
-                print("Solução viável encontrada. Prosseguir para Fase 2.")
-                return matriz_A, vetor_b, vetor_c, indices_B
-
-        # Seleciona a variável que entra na base (mais negativo)
-        q = custo_reduzido.index(min(custo_reduzido))
-        coluna_entrada = [linha[q] for linha in N]
-        
-        # Direção simplex: d = B⁻¹ * a_q
-        d = multiplicar_matrizes(B_inv, [[val] for val in coluna_entrada])
-        
-        print("Direção simplex:", [val[0] for val in d])
-
-        # Determinar variável que sai da base
-        razoes = []
-        for i in range(len(d)):
-            if d[i][0] > 0:
-                razoes.append(xB[i][0] / d[i][0])
-            else:
-                razoes.append(float('inf'))
-        
-        if all(r == float('inf') for r in razoes):
-            print("Problema ilimitado na Fase 1.")
-            return None
-
-        p = razoes.index(min(razoes))
-
-        # Atualizar os índices da base
-        indices_B[p], indices_N[q] = indices_N[q], indices_B[p]
-        print(f"Variável que entra na base: x{indices_B[p]+1}")
-        print(f"Variável que sai da base: x{indices_N[q]+1}")
-
-def fase_2_simplex(matriz_A, vetor_b, vetor_c, indices_B, tipo_otimizacao):
-    num_restricoes = len(matriz_A)
-    num_variaveis = len(matriz_A[0])
-    
-    iteracao = 0
-    while True:
-        iteracao += 1
-        print(f"\n[FASE 2] Iteração {iteracao}")
-
-        # Atualiza os índices não básicos
-        indices_N = [i for i in range(num_variaveis) if i not in indices_B]
-        
-        # Verificação do determinante da base
-        tentativas = 0
-        while True:
-            B = [[matriz_A[i][j] for j in indices_B] for i in range(num_restricoes)]
-            det_B = calcular_determinante(B)
-            if det_B != 0:
-                break
-            else:
-                tentativas += 1
-                print(f"Tentativa {tentativas}: base com determinante zero. Sorteando nova base...")
-                if tentativas > 100:
-                    print("Não foi possível encontrar uma base viável com determinante diferente de zero.")
-                    return None
-                # Sorteia uma nova base viável
-                todos_indices = list(range(num_variaveis))
-                random.shuffle(todos_indices)
-                indices_B = todos_indices[:num_restricoes]
-                indices_N = [i for i in todos_indices if i not in indices_B]
-
-        # Montar matrizes B e N
-        B = [[matriz_A[i][j] for j in indices_B] for i in range(num_restricoes)]
-        N = [[matriz_A[i][j] for j in indices_N] for i in range(num_restricoes)]
-
-        B_inv = calcular_inversa(B)
-        xB = multiplicar_matrizes(B_inv, [[bi] for bi in vetor_b])
-
-        custo_B = [vetor_c[i] for i in indices_B]
-        yT = multiplicar_matrizes([custo_B], B_inv)
-
-        cN = [vetor_c[i] for i in indices_N]
-        yT_N = multiplicar_matrizes(yT, N)
-        custo_reduzido = [cN[i] - yT_N[0][i] for i in range(len(indices_N))]
-
-        print("Custo reduzido:", custo_reduzido)
-
-        # Verifica condição de otimalidade
-        if tipo_otimizacao == "min":
-            otimo = all(cr >= 0 for cr in custo_reduzido)
-        else:  # max
-            otimo = all(cr <= 0 for cr in custo_reduzido)
-
-        if otimo:
-            print("Solução ótima encontrada na Fase 2!")
-            solucao = [0] * num_variaveis
-            for i, idx in enumerate(indices_B):
-                solucao[idx] = xB[i][0]
-            valor_otimo = sum(vetor_c[i] * solucao[i] for i in range(num_variaveis))
-            print("Solução ótima:", solucao)
-            print("Valor ótimo:", valor_otimo)
-            return solucao, valor_otimo
-
-        # Escolher variável para entrar na base
-        if tipo_otimizacao == "min":
-            q = custo_reduzido.index(min(custo_reduzido))
+        if det != 0:
+            return base
         else:
-            q = custo_reduzido.index(max(custo_reduzido))
+            tentativas_invalidas.add(base)
+            tentativas += 1
+            if tentativas > 100:
+                raise ValueError("Não foi possível encontrar uma base viável.")
 
-        coluna_entrada = [linha[q] for linha in N]
-        d = multiplicar_matrizes(B_inv, [[val] for val in coluna_entrada])
+# Resolve o sistema Bx = b manualmente usando a inversa
+def resolver_sistema(B, b):
+    B_inv = calcular_inversa(B)
+    x = multiplicar_matrizes(B_inv, [[bi] for bi in b])
+    return [linha[0] for linha in x]
 
-        print("Direção simplex:", [round(val[0], 5) for val in d])
+def simplex_fase_2(matriz_A, vetor_b, vetor_c, base_inicial):
+    m = len(matriz_A)
+    n = len(matriz_A[0])
 
-        razoes = []
-        for i in range(len(d)):
-            if d[i][0] > 0:
-                razoes.append(xB[i][0] / d[i][0])
-            else:
-                razoes.append(float('inf'))
+    base = list(base_inicial)
+    nao_base = [i for i in range(n) if i not in base]
 
-        if all(r == float('inf') for r in razoes):
-            print("Problema ilimitado.")
-            return None
+    while True:
+        B = [[linha[i] for i in base] for linha in matriz_A]
+        N = [[linha[i] for i in nao_base] for linha in matriz_A]
 
-        p = razoes.index(min(razoes))
+        xB = resolver_sistema(B, vetor_b)
+        print("\nFase 2 - Solução básica atual (xB):", xB)
 
-        # Atualiza os índices
-        indices_B[p], indices_N[q] = indices_N[q], indices_B[p]
-        print(f"Variável que entra na base: x{indices_B[p]+1}")
-        print(f"Variável que sai da base: x{indices_N[q]+1}")
+        cB = [vetor_c[i] for i in base]
+        B_inv = calcular_inversa(B)
+        lambda_T = multiplicar_matrizes([cB], B_inv)[0]
+
+        custos_relativos = []
+        for j in nao_base:
+            aj = [[linha[j]] for linha in matriz_A]
+            lambdaT_aj = sum(lambda_T[i] * aj[i][0] for i in range(m))
+            cj = vetor_c[j]
+            custo_relativo = cj - lambdaT_aj
+            custos_relativos.append((j, custo_relativo))
+
+        print("Custos relativos:", custos_relativos)
+
+        candidatos = [t for t in custos_relativos if t[1] < 0]
+        if not candidatos:
+            print("Solução ótima encontrada!")
+            solucao = [0] * n
+            for idx, b_idx in enumerate(base):
+                solucao[b_idx] = xB[idx]
+            return solucao
+
+        k, _ = min(candidatos, key=lambda x: x[1])
+        a_k = [[linha[k]] for linha in matriz_A]
+        y = multiplicar_matrizes(B_inv, a_k)
+        print("Direção simplex y:", [linha[0] for linha in y])
+
+        if all(linha[0] <= 0 for linha in y):
+            raise ValueError("Problema ilimitado (função objetivo tende ao infinito).")
+
+        razoes = [(xB[i] / y[i][0], i) for i in range(m) if y[i][0] > 0]
+        _, l = min(razoes)
+
+        print(f"Variável que entra: x{k}, Variável que sai: x{base[l]}")
+        base[l] = k
+        nao_base = [i for i in range(n) if i not in base]
+
+def simplex(matriz_A, vetor_b, vetor_c, tipos_restricao=None):
+    m = len(matriz_A)
+    n = len(matriz_A[0])
+
+    if tipos_restricao is None:
+        tipos_restricao = ["<="] * m
+
+    precisa_fase1 = False
+    for i in range(m):
+        if tipos_restricao[i] in [">=", "="] or vetor_b[i] < 0:
+            precisa_fase1 = True
+            break
+
+
+    if not precisa_fase1:
+        print("\nFase 1 não necessária. Executando Fase 2 diretamente...")
+        base_inicial = [n - m + i for i in range(m)]  # índices das variáveis de folga
+        return simplex_fase_2(matriz_A, vetor_b, vetor_c, base_inicial)
+
+    # Caso precise de Fase 1
+    artificiais = []
+    nova_A = []
+
+    for i, linha in enumerate(matriz_A):
+        nova_linha = linha[:]
+        nova_linha += [0] * m
+        if tipos_restricao[i] in [">=", "="]:
+            nova_linha[n + i] = 1
+            artificiais.append(n + i)
+        nova_A.append(nova_linha)
+
+    nova_c = vetor_c + [0] * m
+    c_fase1 = vetor_c + [1 if i in artificiais else 0 for i in range(n, n + m)]
+
+    print("\nExecutando Fase 1...")
+    base_inicial = artificiais[:]
+    solucao_fase1 = simplex_fase_2(nova_A, vetor_b, c_fase1, base_inicial)
+    valor_fase1 = sum(solucao_fase1[i] for i in artificiais)
+
+    if valor_fase1 > 1e-6:
+        raise ValueError("Problema infactível (Fase 1 retornou valor positivo).")
+
+    print("\nExecutando Fase 2...")
+    matriz_sem_artificiais = [linha[:n] for linha in nova_A]
+    return simplex_fase_2(matriz_sem_artificiais, vetor_b, vetor_c, base_inicial=[i for i in range(n) if i not in artificiais])

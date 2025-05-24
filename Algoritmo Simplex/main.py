@@ -1,25 +1,40 @@
+# main.py
 from leitura import ler_arquivo
-from simplex import fase_1_simplex, fase_2_simplex, preparar_fase_1
+from simplex import simplex
 
 def resolver_simplex(arquivo):
-    matriz_A, vetor_b, vetor_c, tipo_otimizacao = ler_arquivo(arquivo)
-    precisa_fase_1 = preparar_fase_1(matriz_A, vetor_b, vetor_c, tipo_otimizacao)
+    matriz_A, vetor_b, vetor_c, tipo_otimizacao, tipos_restricao = ler_arquivo(arquivo)
 
-    if precisa_fase_1:
-        print("Iniciando Fase 1...")
-        resultado_fase1 = fase_1_simplex(matriz_A, vetor_b, vetor_c, tipo_otimizacao)
-        if resultado_fase1 is None:
-            print("Fim do processo: problema inviável.")
-            return
-        else:
-            matriz_A, vetor_b, vetor_c, indices_B = resultado_fase1
-    else:
-        print("Iniciando Fase 2...")
-        num_restricoes = len(matriz_A)
-        num_variaveis = len(vetor_c)
-        indices_B = list(range(num_variaveis - num_restricoes, num_variaveis))
+    print("\n--- Dados do problema ---")
+    print(f"Tipo de otimização: {tipo_otimizacao.upper()}")
+    print("\nMatriz A:")
+    for linha in matriz_A:
+        print("  ", ["{:+.3f}".format(x) for x in linha])
+    print("\nVetor b:")
+    print("  ", ["{:+.3f}".format(x) for x in vetor_b])
+    print("\nVetor c (função objetivo):")
+    print("  ", ["{:+.3f}".format(x) for x in vetor_c])
+    print("Tipos de restrição:")
+    print(tipos_restricao)
+    print("-------------------------\n")
 
-    fase_2_simplex(matriz_A, vetor_b, vetor_c, indices_B, tipo_otimizacao)
+    # Transforma max em min, se necessário
+    if tipo_otimizacao == "max":
+        vetor_c = [-c for c in vetor_c]
+
+    try:
+        solucao = simplex(matriz_A, vetor_b, vetor_c)
+        print("\n--- Resultado final ---")
+        print("Solução ótima (valores das variáveis):")
+        for i, val in enumerate(solucao):
+            if val < 0:
+                val = 0  # Garante que a solução não tenha negativos
+            print(f"x{i+1} = {val:.4f}")
+        valor_objetivo = sum(solucao[i] * vetor_c[i] for i in range(len(vetor_c)))
+        print(f"Valor ótimo da função objetivo: {valor_objetivo:.4f}")
+        print("------------------------")
+    except Exception as e:
+        print("Erro:", e)
 
 if __name__ == "__main__":
-    resolver_simplex("Algoritmo Simplex/teste.txt")
+    resolver_simplex("teste.txt")

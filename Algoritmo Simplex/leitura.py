@@ -27,7 +27,7 @@ def ler_arquivo(arquivo):
     for coef, var in termos:
         vetor_c[var - 1] = coef
 
-    matriz_A, vetor_b, variaveis_folga = [], [], 0
+    matriz_A, vetor_b, tipos_restricao, variaveis_folga = [], [], [], 0
     for linha in linhas[1:]:
         linha = linha.strip()
         if not linha:
@@ -48,11 +48,13 @@ def ler_arquivo(arquivo):
         equacao.append(-1 if operador == ">=" else (1 if operador == "<=" else 0))
         matriz_A.append(equacao)
         vetor_b.append(resultado)
+        tipos_restricao.append(operador)
         variaveis_folga += 1
 
     for linha in matriz_A:
         while len(linha) < quantidade_variaveis + variaveis_folga:
             linha.append(0)
     vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
-    return matriz_A, vetor_b, vetor_c, tipo_otimizacao
+
+    return matriz_A, vetor_b, vetor_c, tipo_otimizacao, tipos_restricao
 
