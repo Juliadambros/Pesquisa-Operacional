@@ -1,38 +1,74 @@
 from leitura import ler_arquivo
-from simplex import simplex
+from simplex import executar_fase1, executar_fase2, adicionar_variaveis_artificiais
 
-def resolver_simplex(arquivo):
+def main(arquivo):
     matriz_A, vetor_b, vetor_c, tipo_otimizacao, tipos_restricao = ler_arquivo(arquivo)
 
-    print("\n--- Dados do problema ---")
-    print(f"Tipo de otimização: {tipo_otimizacao.upper()}")
     print("\nMatriz A:")
     for linha in matriz_A:
-        print("  ", ["{:+.3f}".format(x) for x in linha])
-    print("\nVetor b:")
-    print("  ", ["{:+.3f}".format(x) for x in vetor_b])
-    print("\nVetor c (função objetivo):")
-    print("  ", ["{:+.3f}".format(x) for x in vetor_c])
-    print("Tipos de restrição:")
-    print(tipos_restricao)
-    print("-------------------------\n")
+        print(linha)
 
-    if tipo_otimizacao == "max":
-        vetor_c = [-c for c in vetor_c]
+    print("\nVetor b:", vetor_b)
+    print("Vetor c:", vetor_c)
+    print("Tipo de problema:", tipo_otimizacao)
 
-    try:
-        solucao = simplex(matriz_A, vetor_b, vetor_c)
-        print("\n--- Resultado final ---")
-        print("Solução ótima (valores das variáveis):")
-        for i, val in enumerate(solucao):
-            if val < 0:
-                val = 0  # Garante que a solução não tenha negativos
-            print(f"x{i+1} = {val:.4f}")
-        valor_objetivo = sum(solucao[i] * vetor_c[i] for i in range(len(vetor_c)))
-        print(f"Valor ótimo da função objetivo: {valor_objetivo:.4f}")
-        print("------------------------")
-    except Exception as e:
-        print("Erro:", e)
+    # Se for maximização, converte para minimização
+    if tipo_otimizacao == 'max':
+        vetor_c = [-coef for coef in vetor_c]
 
-if __name__ == "__main__":
-    resolver_simplex("teste.txt")
+    m = len(matriz_A)
+    n = len(matriz_A[0])
+
+    precisa_fase1 = False
+    for i in range(m):
+        if tipos_restricao[i] in [">=",">", "="] or vetor_b[i] < 0:
+            precisa_fase1 = True
+            break
+    if not precisa_fase1:
+        print("\nFase 1 não necessária. Executando Fase 2 diretamente...")
+
+        # Tenta identificar base viável (colunas identidade)
+        base_inicial = []
+        for j in range(n):
+            coluna = [matriz_A[i][j] for i in range(m)]
+            if coluna.count(1) == 1 and coluna.count(0) == m - 1:
+                base_inicial.append(j)
+
+        if len(base_inicial) < m:
+            print("Não foi possível encontrar base viável com variáveis de folga. Executando Fase 1...")
+            precisa_fase1 = True
+        else:
+            solucao_final, valor_objetivo, status_f2 = executar_fase2(vetor_c, matriz_A, vetor_b, base_inicial)
+            if status_f2 == "ilimitado":
+                print("Problema ilimitado! (não há solução ótima finita)")
+                return
+            print("\nSolução ótima encontrada:")
+            print("x =", solucao_final[:len(vetor_c)])
+            print("Valor ótimo Z =", valor_objetivo)
+            return
+
+    if precisa_fase1:
+        matriz_A_art, vetor_b_art, vetor_c_art, base_inicial = adicionar_variaveis_artificiais(matriz_A, vetor_b, vetor_c)
+        solucao_fase1, base_fase1, status_f1 = executar_fase1(vetor_c_art, matriz_A_art, vetor_b_art)
+
+        if status_f1 == "infactivel":
+            print("Problema infactível! (não há solução viável)")
+            return
+
+        # Ajusta base para excluir variáveis artificiais
+        base_fase2 = [j for j in base_fase1 if j < n]
+        folgas_disponiveis = [j for j in range(n) if j not in base_fase2]
+        while len(base_fase2) < m and folgas_disponiveis:
+            base_fase2.append(folgas_disponiveis.pop(0))
+
+        solucao_final, valor_objetivo, status_f2 = executar_fase2(vetor_c, matriz_A, vetor_b, base_fase2)
+        if status_f2 == "ilimitado":
+            print("Problema ilimitado! (não há solução ótima finita)")
+            return
+
+        print("\nSolução ótima encontrada:")
+        print("x =", solucao_final[:len(vetor_c)])
+        print("Valor ótimo Z =", valor_objetivo)
+
+if __name__ == '__main__':
+    main("teste.txt")

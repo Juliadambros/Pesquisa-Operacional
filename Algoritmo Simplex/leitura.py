@@ -35,17 +35,44 @@ def ler_arquivo(arquivo):
 
         if ">=" in linha: operador, coefE, coefD = ">=", *linha.split(">=")
         elif "<=" in linha: operador, coefE, coefD = "<=", *linha.split("<=")
+        elif ">" in linha: operador, coefE, coefD = ">", *linha.split(">")
+        elif "<" in linha: operador, coefE, coefD = "<", *linha.split("<")
         elif "=" in linha: operador, coefE, coefD = "=", *linha.split("=")
         else: continue
 
         partes = extrair_termos(coefE.strip())
         resultado = float(coefD.strip().replace(',', '.'))
 
+        # Verifica se o resultado é negativo e multiplica por -1 se necessário
+        if resultado < 0:
+            resultado *= -1
+            # Inverte o operador quando multiplica por -1
+            if operador == ">=":
+                operador = "<="
+            elif operador == "<=":
+                operador = ">="
+            elif operador == ">":
+                operador = "<"
+            elif operador == "<":
+                operador = ">"
+            # Multiplica os coeficientes por -1
+            partes = [(-coef, var) for coef, var in partes]
+
         equacao = [0] * (quantidade_variaveis + variaveis_folga)
         for coef, var in partes:
             equacao[var - 1] = coef
 
-        equacao.append(-1 if operador == ">=" else (1 if operador == "<=" else 0))
+        if operador == ">=":
+            equacao.append(-1)  
+        elif operador == "<=":
+            equacao.append(1)  
+        elif operador == ">":
+            equacao.append(-1)  
+        elif operador == "<":
+            equacao.append(1)    
+        else:  # =
+            equacao.append(0)
+
         matriz_A.append(equacao)
         vetor_b.append(resultado)
         tipos_restricao.append(operador)
@@ -57,4 +84,3 @@ def ler_arquivo(arquivo):
     vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
 
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao, tipos_restricao
-
