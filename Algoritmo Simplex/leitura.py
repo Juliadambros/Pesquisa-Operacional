@@ -5,7 +5,7 @@ def extrair_termos(expr):
     if re.search(r'[a-wy-zA-WY-Z]', expr):
         raise ValueError("Expressão contém variáveis inválidas. Use apenas 'x' seguido de número.")
 
-    matches = re.findall(r'([+-]?\d*\.?\d*)(x\d+)', expr)
+    matches = re.findall(r'([+-]?(?:\d+(?:\.\d+)?|\d*))(x\d+)', expr)
     termos = []
     for coef_str, var_str in matches:
         coef = float(coef_str) if coef_str not in ['', '+', '-'] else (1.0 if coef_str != '-' else -1.0)
@@ -13,8 +13,8 @@ def extrair_termos(expr):
         termos.append((coef, var))
     return termos
 
-def ler_arquivo(arquivo):
-    with open(arquivo, 'r') as arquivo:
+def ler_arquivo(caminho_arquivo):
+    with open(caminho_arquivo, 'r') as arquivo:
         linhas = arquivo.readlines()
 
     primeira_linha = linhas[0].lower()
@@ -27,26 +27,35 @@ def ler_arquivo(arquivo):
     for coef, var in termos:
         vetor_c[var - 1] = coef
 
-    matriz_A, vetor_b, tipos_restricao, variaveis_folga = [], [], [], 0
+    matriz_A = []
+    vetor_b = []
+    tipos_restricao = []
+    variaveis_folga = 0
+    indice_folga = 0
+
     for linha in linhas[1:]:
         linha = linha.strip()
         if not linha:
             continue
 
-        if ">=" in linha: operador, coefE, coefD = ">=", *linha.split(">=")
-        elif "<=" in linha: operador, coefE, coefD = "<=", *linha.split("<=")
-        elif ">" in linha: operador, coefE, coefD = ">", *linha.split(">")
-        elif "<" in linha: operador, coefE, coefD = "<", *linha.split("<")
-        elif "=" in linha: operador, coefE, coefD = "=", *linha.split("=")
-        else: continue
+        if ">=" in linha:
+            operador, coefE, coefD = ">=", *linha.split(">=")
+        elif "<=" in linha:
+            operador, coefE, coefD = "<=", *linha.split("<=")
+        elif ">" in linha:
+            operador, coefE, coefD = ">", *linha.split(">")
+        elif "<" in linha:
+            operador, coefE, coefD = "<", *linha.split("<")
+        elif "=" in linha:
+            operador, coefE, coefD = "=", *linha.split("=")
+        else:
+            continue  # Ignorar linhas inválidas
 
         partes = extrair_termos(coefE.strip())
         resultado = float(coefD.strip().replace(',', '.'))
 
-        # Verifica se o resultado é negativo e multiplica por -1 se necessário
         if resultado < 0:
             resultado *= -1
-            # Inverte o operador quando multiplica por -1
             if operador == ">=":
                 operador = "<="
             elif operador == "<=":
@@ -55,32 +64,34 @@ def ler_arquivo(arquivo):
                 operador = "<"
             elif operador == "<":
                 operador = ">"
-            # Multiplica os coeficientes por -1
             partes = [(-coef, var) for coef, var in partes]
 
-        equacao = [0] * (quantidade_variaveis + variaveis_folga)
+        # Inicializar equação com variáveis principais
+        equacao = [0] * quantidade_variaveis
         for coef, var in partes:
             equacao[var - 1] = coef
 
-        if operador == ">=":
-            equacao.append(-1)  
-        elif operador == "<=":
-            equacao.append(1)  
-        elif operador == ">":
-            equacao.append(-1)  
-        elif operador == "<":
-            equacao.append(1)    
-        else:  # =
-            equacao.append(0)
+        # Adicionar variáveis de folga se necessário
+        if operador in (">=", "<=", ">", "<"):
+            equacao += [0] * variaveis_folga
+            equacao.append(-1 if operador in (">=", ">") else 1)
+            variaveis_folga += 1
+            indice_folga += 1
+        else:  # operador ==
+            equacao += [0] * variaveis_folga
+            equacao.append(0)  # Nenhuma variável de folga
 
         matriz_A.append(equacao)
         vetor_b.append(resultado)
         tipos_restricao.append(operador)
-        variaveis_folga += 1
 
+    # Garantir que todas as equações tenham o mesmo tamanho
+    tamanho_total = quantidade_variaveis + variaveis_folga
     for linha in matriz_A:
-        while len(linha) < quantidade_variaveis + variaveis_folga:
+        while len(linha) < tamanho_total:
             linha.append(0)
-    vetor_c.extend([0] * (len(matriz_A[0]) - len(vetor_c)))
+
+    # Ajustar vetor c para o mesmo tamanho da matriz A
+    vetor_c.extend([0] * (tamanho_total - len(vetor_c)))
 
     return matriz_A, vetor_b, vetor_c, tipo_otimizacao, tipos_restricao

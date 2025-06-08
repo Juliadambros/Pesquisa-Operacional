@@ -1,42 +1,134 @@
-1_a
+1_a 11,6
 Max f(x) = x1 + x2
 2x1 + 1x2 <= 18
 -x1 + 2x2 <= 4
 3x1 - 6x2 <= 12
 
-1_b
+1_b 66
 Max f(x) = 6x1 + 2x2
 3x1 + x2 <= 33
 x1 + x2 <= 13
 
-1_c
+1_c 3
 Max f(x) = x1 + x2
 2x1 + x2 <= 8
 x1 + 2x2 <= 3
 
-1_d
+1_d 45
 Max f(x) = 3x1 + x2
 2x1 + x2 <= 30
 x1 + 4x2 <= 40
 
-1_e
+1_e 352,5
 Max f(x) = 2x1 + 5x2
 3x1 + 10x2 <= 600
 x1 + 2x2 <= 162
 
-1_f
+1_f 1,6667
 Min f(x) = -x1 + 2x2
 -2x1 + x2 <= 3
 3x1 + 4x2 <= 5
 x1 - x2 <=2
 
-1_g
+1_g site: 5, meu codigo: 0.3225806451612905
 Min f(x) = -x1 + 2x2
 x1 + x2 >= 1
 -5x1 + 2x2 >= -10
 3x1 + 5x2 >= 15
 
-1_h
+1_h Z=0 , ilimitado
 Max f(x1,x2) = 2x1 + 2x2
 -0,5x1 + x2 <= 2
 x1 - x2 >= -1
+
+1_i 11,6
+Max f(x1, x2) = x1 + x2
+2x1 + x2 <= 18
+-x1 + 2x2 <= 4
+3x1 - 6x2 >= -12
+
+1_j  ilimitado, z=0
+Min f(x1, x2) = 4x1 - 12x2
+2x1 + x2 >= 6
+x1 + 3x2 <= 8
+x1  >= 4
+
+1_k 5
+Min f(x1, x2) = -x1 - x2 + 0x3
+x1 + x3 >= 1
+x1 -3x2 - x3 >= 1
+x1 - x2 + 5x3 >= 5
+x1 + x2 + x3 <=5
+
+1_l 30
+Max f(x) = 3x1 + 3x2 + 0x3
+x1 + 3x3 <= 5
+x2 <=5
+3x1 + 2x3>= 6
+x1 + x2 <=10
+
+1_m 16
+Max f(x1, x2) = 4x1 + 3x2
+x1 + 3x2<=7
+2x1 + 2x2 = 8
+x1 + x2 <= -3
+x2 <=2
+
+2_a 45
+Max f(x1, x2) = 3x1 + x2
+2x1 + x2 <= 30
+x1 + 4x2 <= 40
+
+2_b 352,5
+Max f(x1, x2) = 2x1 + 5x2
+3x1 + 10x2 <= 600
+x1 + 2x2 <= 162
+
+2_c 1,6666 mas o meu: z=0
+Min f(x) = −x1 + 2x2
+−2x1 + x2 <= 3
+3x1 + 4x2 <= 5
+x1 − x2 <= 2
+
+2_d 11,66666
+Max f(x1, x2)= x1 + x2
+2x1 + x2 <= 18
+-x1 + 2x2 <= 4
+3x1 − 6x2 >= -12
+
+2_e 30
+Max f(x) = 3x1 + 3x2 + 0x3
+x1 + 3x3 <= 5
+x2 <= 5
+3x1 + 2x3 >= 6
+x1 + x2 <= 10
+
+2_f 16, meu codigo gera 2 respostas as vezes 16 as vezes erro
+Max f(x) = 4x1 + 3x2
+x1 + 3x2 <= 7
+2x1 + 2x2 = 8
+x1 + x2 <= -3
+x2 <= 2
+
+2_g deveria dar 36, meu codigo: 8
+Max f(x) = 4x1 + 8x2
+3x1 + 2x2 = 18
+x1 + x2 <= 5
+x1 <= 4
+
+min f(x) = -2.5x1 - 5.7x2 - x3 - 2x4 
+x2 + x3 <= 18
+-1.5x1 + 2.5x2 <= 4
+3x1 - 6x2 + x4 <= 12.7
+
+//deveria ser ou 14.9999 ou 15
+max z = 3x1 + 3x2 + 13x3
+-3x1 + 6x2 + 7x3 <= 8
+6x1 - 3x2 + 7x3 <= 8
+x1 <= 2
+x3 >= 1
+
+Max Z = 4x1 + 5x2 + 9x3 + 11x4
+x1 + x2 + x3 + x4 <= 15
+7x1 + 5x2 + 3x3 + 2x4 <= 120
+3x1 + 5x2 + 10x3 + 15x4 <= 100

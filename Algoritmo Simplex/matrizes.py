@@ -30,20 +30,27 @@ def multiplicar_matrizes(A, B):
              for j in range(len(B[0]))] for i in range(len(A))]
 
 def calcular_inversa(matriz):
-    print("Determinante de B:", calcular_determinante(matriz))
     n = len(matriz)
     identidade = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
     M = [linha[:] for linha in matriz]
 
     for i in range(n):
         if M[i][i] == 0:
+            # Tenta trocar linha
+            troca_feita = False
             for j in range(i + 1, n):
                 if M[j][i] != 0:
                     M[i], M[j] = M[j], M[i]
                     identidade[i], identidade[j] = identidade[j], identidade[i]
+                    troca_feita = True
                     break
+            if not troca_feita:
+                raise ValueError("Matriz singular, inversa não existe")
 
         divisor = M[i][i]
+        if abs(divisor) < 1e-12:
+            raise ValueError("Matriz singular, inversa não existe")
+
         for j in range(n):
             M[i][j] /= divisor
             identidade[i][j] /= divisor
@@ -56,3 +63,11 @@ def calcular_inversa(matriz):
                     identidade[k][j] -= identidade[i][j] * fator
 
     return identidade
+
+
+
+def multiplicar_matriz_vetor(matriz, vetor):
+    if len(matriz[0]) != len(vetor):
+        raise ValueError("Dimensões incompatíveis para multiplicação matriz-vetor.")
+    return [sum(matriz[i][j] * vetor[j] for j in range(len(vetor)))
+            for i in range(len(matriz))]
