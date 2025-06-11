@@ -59,7 +59,6 @@ def ler_arquivo(caminho_arquivo):
         partes = extrair_termos(coefE.strip())
         resultado = float(coefD.strip().replace(',', '.'))
 
-        # Aviso sobre possíveis restrições infactíveis
         if resultado < 0 and operador in ("<=", "<"):
             print(f"ATENÇÃO: restrição '{linha}' tem b < 0 com operador '{operador}'.")
             print("→ Isso pode tornar o problema infactível com variáveis não-negativas (x >= 0).")
@@ -82,7 +81,7 @@ def ler_arquivo(caminho_arquivo):
         for coef, var in partes:
             equacao[var - 1] = coef
 
-        # Adicionar variáveis de folga se necessário
+        # Adicionar variáveis de folga 
         if operador in (">=", "<=", ">", "<"):
             equacao += [0] * variaveis_folga
             equacao.append(-1 if operador in (">=", ">") else 1)

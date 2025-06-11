@@ -37,7 +37,6 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
     if len(base) != m:
         base = [j for j in range(n) if j >= n - m]
     
-    # Verifica se a base é válida
     if not base_valida(matriz_A, base, m):
         print("Não foi possível encontrar base inicial válida para Fase I")
         return None, None, "infactível"

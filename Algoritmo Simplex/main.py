@@ -35,7 +35,6 @@ def main(arquivo):
     print("Vetor c:", vetor_c)
     print("Tipo de problema:", tipo_otimizacao)
 
-    # Converte maximização para minimização
     vetor_c_original = vetor_c.copy()
     if tipo_otimizacao == 'max':
         vetor_c = [-coef for coef in vetor_c]
@@ -44,7 +43,6 @@ def main(arquivo):
     n = len(matriz_A[0])
     num_variaveis_originais = len(vetor_c)
 
-    # Verifica se precisa da Fase 1
     precisa_fase1 = any(
         tipos_restricao[i] in [">=", ">", "="] or vetor_b[i] < 0
         for i in range(m)
@@ -68,7 +66,6 @@ def main(arquivo):
                 print("Erro durante a execução da Fase 2")
                 return
 
-            # Ajusta o valor objetivo para maximização
             if tipo_otimizacao == 'max':
                 valor_objetivo *= -1
 
