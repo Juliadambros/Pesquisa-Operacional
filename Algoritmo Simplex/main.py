@@ -17,11 +17,10 @@ def reconstruir_base_viavel(matriz_A, m, n, base_fase1):
     return base_nova
 
 def encontrar_base_viavel(matriz_A, m, n):
-    """Tenta encontrar base inicial simples nas colunas da matriz A (identidade parcial)."""
     base_inicial = []
     for j in range(n):
         coluna = [matriz_A[i][j] for i in range(m)]
-        if coluna.count(1) == 1 and coluna.count(0) == m - 1:
+        if coluna.count(1) == 1 and coluna.count(0) == m - 1:   #Verifica se a coluna tem exatamente um "1" e o resto tudo "0"
             base_inicial.append(j)
     return base_inicial[:m]
 
@@ -60,9 +59,7 @@ def main(arquivo):
             precisa_fase1 = True
         else:
             print(f"Base inicial encontrada para Fase 2: {base_inicial}")
-            solucao_final, valor_objetivo, status_f2 = executar_fase2(
-                vetor_c, matriz_A, vetor_b, base_inicial, tipos_restricao
-            )
+            solucao_final, valor_objetivo, status_f2 = executar_fase2(vetor_c, matriz_A, vetor_b, base_inicial, tipos_restricao)
 
             if status_f2 == "ilimitado":
                 print("Problema ilimitado! (não há solução ótima finita)")
@@ -82,9 +79,7 @@ def main(arquivo):
 
     if precisa_fase1:
         print("\nExecutando Fase 1 com variáveis artificiais...")
-        matriz_A_art, vetor_b_art, vetor_c_art, base_inicial = adicionar_variaveis_artificiais(
-            matriz_A, vetor_b, vetor_c, tipos_restricao
-        )
+        matriz_A_art, vetor_b_art, vetor_c_art, base_inicial = adicionar_variaveis_artificiais(matriz_A, vetor_b, vetor_c, tipos_restricao)
         
         print("\nMatriz A aumentada para Fase 1:")
         for linha in matriz_A_art:
@@ -92,10 +87,7 @@ def main(arquivo):
         print("Vetor c para Fase 1:", vetor_c_art)
         print("Base inicial para Fase 1:", base_inicial)
 
-        
-        solucao_fase1, base_fase1, status_f1 = executar_fase1(
-            vetor_c_art, matriz_A_art, vetor_b_art, tipos_restricao
-        )
+        solucao_fase1, base_fase1, status_f1 = executar_fase1(vetor_c_art, matriz_A_art, vetor_b_art, tipos_restricao)
 
         if status_f1 == "infactível":
             print("Problema infactível! (não há solução viável)")
@@ -109,9 +101,7 @@ def main(arquivo):
 
         print(f"\nBase para Fase 2: {base_fase2}")
 
-        solucao_final, valor_objetivo, status_f2 = executar_fase2(
-            vetor_c, matriz_A, vetor_b, base_fase2, tipos_restricao
-        )
+        solucao_final, valor_objetivo, status_f2 = executar_fase2(vetor_c, matriz_A, vetor_b, base_fase2, tipos_restricao)
 
         if status_f2 == "ilimitado":
             print("Problema ilimitado! (não há solução ótima finita)")
@@ -120,7 +110,6 @@ def main(arquivo):
             print("Erro durante a execução da Fase 2")
             return
 
-        # Ajusta o valor objetivo para maximização
         if tipo_otimizacao == 'max':
             valor_objetivo *= -1
 

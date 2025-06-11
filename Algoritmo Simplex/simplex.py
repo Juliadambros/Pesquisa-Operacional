@@ -5,7 +5,6 @@ MAX_TENTATIVAS_BASE = 50
 TOLERANCIA = 1e-8
 
 def base_valida(matriz_A, base, m):
-    """Verifica se a base é válida (matriz quadrada e determinante não nulo)"""
     if len(base) != m:
         return False
     B = [[matriz_A[i][j] for j in base] for i in range(m)]
@@ -23,6 +22,7 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
     print("\n=== INÍCIO FASE I ===")
     
     # Base inicial: variáveis artificiais (garante matriz identidade)
+    #Caso A
     base = []
     for i in range(m):
         # Procura coluna com 1 na linha i e 0 nas outras (variável artificial)
@@ -33,6 +33,7 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
                 break
     
     # Se não encontrou todas as variáveis artificiais, tenta as últimas colunas
+    #Caso B
     if len(base) != m:
         base = [j for j in range(n) if j >= n - m]
     
@@ -64,6 +65,7 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
                 return None, None, "infactível"
             continue
 
+        #x_B = B⁻¹ * b
         x_B = [sum(B_inv[i][k] * vetor_b[k] for k in range(m)) for i in range(m)]
         solucao = [0] * n
         for i, j in enumerate(base):
@@ -75,7 +77,7 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
 
         # Passo 2: Calcular custos relativos
         c_B = [vetor_c[j] for j in base]
-        lambda_ = [sum(c_B[k] * B_inv[k][i] for k in range(m)) for i in range(m)]
+        lambda_ = [sum(c_B[k] * B_inv[k][i] for k in range(m)) for i in range(m)] #vetor multiplicador
         
         nao_base = [j for j in range(n) if j not in base]
         custos_relativos = {
@@ -132,7 +134,7 @@ def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
             return None, None, "ilimitado"
         
         # Prioriza saída de variáveis artificiais
-        i_sai_candidatos = [i for i in razoes if base[i] >= n - m]  # Artificiais
+        i_sai_candidatos = [i for i in razoes if base[i] >= n - m]  #artificiais
         if not i_sai_candidatos:
             i_sai_candidatos = list(razoes.keys())
         

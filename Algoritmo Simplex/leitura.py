@@ -2,6 +2,10 @@ import re
 
 def extrair_termos(expr):
     expr = expr.replace(" ", "").replace(",", ".").replace("−", "-")  # substitui menos unicode por traço normal
+
+    if re.search(r'[^0-9xX+\-.,]', expr):
+        raise ValueError("Expressão contém caracteres inválidos. Use apenas números, '+', '-', variáveis como x1, x2, etc.")
+
     if re.search(r'[a-wy-zA-WY-Z]', expr):
         raise ValueError("Expressão contém variáveis inválidas. Use apenas 'x' seguido de número.")
 
@@ -12,6 +16,7 @@ def extrair_termos(expr):
         var = int(var_str[1:])
         termos.append((coef, var))
     return termos
+
 
 def ler_arquivo(caminho_arquivo):
     with open(caminho_arquivo, 'r') as arquivo:
