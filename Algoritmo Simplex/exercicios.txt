@@ -67,7 +67,7 @@ x2 <=5
 3x1 + 2x3>= 6
 x1 + x2 <=10
 
-1_m 16
+1_m 16 , mas não deveria ser infactivel?, se for >= o meu da 16
 Max f(x1, x2) = 4x1 + 3x2
 x1 + 3x2<=7
 2x1 + 2x2 = 8
@@ -84,11 +84,11 @@ Max f(x1, x2) = 2x1 + 5x2
 3x1 + 10x2 <= 600
 x1 + 2x2 <= 162
 
-2_c 1,6666 mas o meu: z=0
-Min f(x) = −x1 + 2x2
-−2x1 + x2 <= 3
+2_c 1,6666 
+Min f(x) = -x1 + 2x2
+-2x1 + x2 <= 3
 3x1 + 4x2 <= 5
-x1 − x2 <= 2
+x1 - x2 <= 2
 
 2_d 11,66666
 Max f(x1, x2)= x1 + x2
@@ -103,7 +103,7 @@ x2 <= 5
 3x1 + 2x3 >= 6
 x1 + x2 <= 10
 
-2_f 16, meu codigo gera 2 respostas as vezes 16 as vezes erro
+2_f 16, porem o meu só gera 16 se for >= e não <=
 Max f(x) = 4x1 + 3x2
 x1 + 3x2 <= 7
 2x1 + 2x2 = 8
@@ -121,7 +121,7 @@ x2 + x3 <= 18
 -1.5x1 + 2.5x2 <= 4
 3x1 - 6x2 + x4 <= 12.7
 
-//deveria ser ou 14.9999 ou 15
+14.9999 
 max z = 3x1 + 3x2 + 13x3
 -3x1 + 6x2 + 7x3 <= 8
 6x1 - 3x2 + 7x3 <= 8

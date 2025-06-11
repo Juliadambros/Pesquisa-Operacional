@@ -1,7 +1,7 @@
 import re
 
 def extrair_termos(expr):
-    expr = expr.replace(" ", "").replace(",", ".")
+    expr = expr.replace(" ", "").replace(",", ".").replace("−", "-")  # substitui menos unicode por traço normal
     if re.search(r'[a-wy-zA-WY-Z]', expr):
         raise ValueError("Expressão contém variáveis inválidas. Use apenas 'x' seguido de número.")
 
@@ -53,6 +53,12 @@ def ler_arquivo(caminho_arquivo):
 
         partes = extrair_termos(coefE.strip())
         resultado = float(coefD.strip().replace(',', '.'))
+
+        # Aviso sobre possíveis restrições infactíveis
+        if resultado < 0 and operador in ("<=", "<"):
+            print(f"ATENÇÃO: restrição '{linha}' tem b < 0 com operador '{operador}'.")
+            print("→ Isso pode tornar o problema infactível com variáveis não-negativas (x >= 0).")
+
 
         if resultado < 0:
             resultado *= -1

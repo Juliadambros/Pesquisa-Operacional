@@ -69,5 +69,8 @@ def calcular_inversa(matriz):
 def multiplicar_matriz_vetor(matriz, vetor):
     if len(matriz[0]) != len(vetor):
         raise ValueError("Dimensões incompatíveis para multiplicação matriz-vetor.")
+    # Se a matriz for uma lista unidimensional (vetor linha), converta para matriz 1xn
+    if not isinstance(matriz[0], list):
+        matriz = [matriz]
     return [sum(matriz[i][j] * vetor[j] for j in range(len(vetor)))
             for i in range(len(matriz))]

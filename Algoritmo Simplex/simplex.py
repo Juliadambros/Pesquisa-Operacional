@@ -1,205 +1,263 @@
+from matrizes import calcular_determinante, calcular_inversa, multiplicar_matrizes
 import random
-from matrizes import calcular_determinante, calcular_inversa, multiplicar_matrizes, multiplicar_matriz_vetor
 
 MAX_TENTATIVAS_BASE = 50
 TOLERANCIA = 1e-8
 
-def encontrar_base_viavel_aleatoria(matriz_A, vetor_b, m, n):
-    tentativas = 0
-    while tentativas < MAX_TENTATIVAS_BASE:
-        base_candidata = random.sample(range(n), m)
-        B = [[matriz_A[i][j] for j in base_candidata] for i in range(m)]
-
-        if abs(calcular_determinante(B)) > TOLERANCIA:
-            try:
-                B_inv = calcular_inversa(B)
-                xB = multiplicar_matriz_vetor(B_inv, vetor_b)
-
-                if all(x >= -TOLERANCIA for x in xB):
-                    return base_candidata
-            except ZeroDivisionError:
-                pass  # Ignora erros numéricos na inversa
-        tentativas += 1
-    return None
-
 def base_valida(matriz_A, base, m):
+    """Verifica se a base é válida (matriz quadrada e determinante não nulo)"""
     if len(base) != m:
-        return False  # não é quadrada, logo inválida
+        return False
     B = [[matriz_A[i][j] for j in base] for i in range(m)]
-    det = calcular_determinante(B)
-    return abs(det) > TOLERANCIA
+    try:
+        det = calcular_determinante(B)
+        return abs(det) > TOLERANCIA
+    except:
+        return False
 
-
-def trocar_base(matriz_A, base_antiga, m, n):
-    tentativas = 0
-    while tentativas < MAX_TENTATIVAS_BASE:
-        base_candidata = random.sample(range(n), m)
-        if base_candidata != base_antiga and base_valida(matriz_A, base_candidata, m):
-            return base_candidata
-        tentativas += 1
-    return None
-
-def executar_fase1(vetor_c, matriz_A, vetor_b):
+def executar_fase1(vetor_c, matriz_A, vetor_b, tipos_restricao):
     m = len(matriz_A)
     n = len(matriz_A[0])
     iteracao = 1
 
-    base = encontrar_base_viavel_aleatoria(matriz_A, vetor_b, m, n)
-
-    if base is None:
-        print("Não foi possível encontrar base viável aleatória para a Fase 1.")
-        return None, None, "erro"
-
-    nao_base = [j for j in range(n) if j not in base]
-
-    print("\n*Fase 1*")
-
-    while True:
-        print(f"\nIteração {iteracao} - Fase 1")
-        print(f"Base atual: {base}")
-
-        B = [[matriz_A[i][j] for j in base] for i in range(m)]
-        det_B = calcular_determinante(B)
-
-        if abs(det_B) < TOLERANCIA:
-            print("Determinante da base atual é zero. Tentando trocar a base...")
-            base_antiga = base.copy()
-            base = trocar_base(matriz_A, base_antiga, m, n)
-            if base is None:
-                print("Não foi possível encontrar nova base viável para continuar a Fase 1.")
-                return None, None, "erro"
-            nao_base = [j for j in range(n) if j not in base]
-            continue
-
-        B_inv = calcular_inversa(B)
-        x_B = multiplicar_matrizes(B_inv, [[vetor_b[i]] for i in range(m)])
-        solucao = [0] * n
-        for i, j in enumerate(base):
-            solucao[j] = x_B[i][0]
-
-        print("Solução básica:", [solucao[j] for j in base])
-
-        c_B = [vetor_c[j] for j in base]
-        lambda_ = multiplicar_matrizes([c_B], B_inv)[0]
-
-        custos_relativos = {}
-        for j in nao_base:
-            a_j = [matriz_A[i][j] for i in range(m)]
-            c_j = vetor_c[j]
-            custos_relativos[j] = c_j - sum(lambda_[i] * a_j[i] for i in range(m))
-
-        if all(cr >= -TOLERANCIA for cr in custos_relativos.values()):
-            print("Fase I concluída: solução básica factível encontrada.")
-            return solucao, base, "factivel"
-
-        j_entra = min(custos_relativos.items(), key=lambda item: item[1])[0]
-        a_j = [[matriz_A[i][j_entra]] for i in range(m)]
-        y = multiplicar_matrizes(B_inv, a_j)
-
-        if all(y_i[0] <= 0 for y_i in y):
-            print("Problema ilimitado na Fase 1.")
-            return solucao, base, "ilimitado"
-
-        razoes = {i: (x_B[i][0] / y[i][0] if y[i][0] > 0 else float('inf')) for i in range(m)}
-        i_sai = min(razoes.items(), key=lambda item: item[1])[0]
-        j_sai = base[i_sai]
-
-        print(f"Variável que entra: x{j_entra}, que sai: x{j_sai}")
-
-        base[i_sai] = j_entra
-        nao_base = [j for j in range(n) if j not in base]
-
-        iteracao += 1
-
-def executar_fase2(vetor_c, matriz_A, vetor_b, base_inicial=None):
-    m = len(matriz_A)
-    n = len(matriz_A[0])
-    iteracao = 1
-
-    base = list(base_inicial) if base_inicial is not None else None
-
-    if base is None or not base_valida(matriz_A, base, m):
-        base = encontrar_base_viavel_aleatoria(matriz_A, vetor_b, m, n)
-        if base is None:
-            print("Não foi possível encontrar base viável para a Fase 2.")
-            return None, None, "erro"
-
-    nao_base = [j for j in range(n) if j not in base]
-
-    print("\n*Fase 2*")
-
-    while True:
-        print(f"\nIteração {iteracao} - Fase 2")
-        print(f"Base atual: {base}")
-
-        B = [[matriz_A[i][j] for j in base] for i in range(m)]
-        det_B = calcular_determinante(B)
-
-        if abs(det_B) < TOLERANCIA:
-            print("Determinante da base atual é zero. Tentando trocar a base...")
-            base_antiga = base.copy()
-            base = trocar_base(matriz_A, base_antiga, m, n)
-            if base is None:
-                print("Não foi possível encontrar nova base viável para continuar a Fase 2.")
-                return None, None, "erro"
-            nao_base = [j for j in range(n) if j not in base]
-            continue
-
-        B_inv = calcular_inversa(B)
-        x_B = multiplicar_matrizes(B_inv, [[vetor_b[i]] for i in range(m)])
-        solucao = [0] * n
-        for i, j in enumerate(base):
-            solucao[j] = x_B[i][0]
-
-        print("Solução básica:", [solucao[j] for j in base])
-
-        c_B = [vetor_c[j] for j in base]
-        lambda_ = multiplicar_matrizes([c_B], B_inv)[0]
-
-        custos_relativos = {}
-        for j in nao_base:
-            a_j = [matriz_A[i][j] for i in range(m)]
-            c_j = vetor_c[j]
-            custos_relativos[j] = c_j - sum(lambda_[i] * a_j[i] for i in range(m))
-
-        if all(cr >= -TOLERANCIA for cr in custos_relativos.values()):
-            print("Solução ótima encontrada.")
-            valor_objetivo = sum(vetor_c[j] * solucao[j] for j in range(n))
-            return solucao, valor_objetivo, "otimo"
-
-        j_entra = min(custos_relativos.items(), key=lambda item: item[1])[0]
-        a_j = [[matriz_A[i][j_entra]] for i in range(m)]
-        y = multiplicar_matrizes(B_inv, a_j)
-
-        if all(y_i[0] <= 0 for y_i in y):
-            print("Problema ilimitado na Fase 2.")
-            return solucao, 0, "ilimitado"
-
-        razoes = {i: (x_B[i][0] / y[i][0] if y[i][0] > 0 else float('inf')) for i in range(m)}
-        i_sai = min(razoes.items(), key=lambda item: item[1])[0]
-        j_sai = base[i_sai]
-
-        print(f"Variável que entra: x{j_entra}, que sai: x{j_sai}")
-
-        base[i_sai] = j_entra
-        nao_base = [j for j in range(n) if j not in base]
-
-        iteracao += 1
-
-def adicionar_variaveis_artificiais(matriz_A, vetor_b, vetor_c):
-    m = len(matriz_A)
-    n = len(matriz_A[0])
-
-    matriz_A_art = [linha[:] for linha in matriz_A]  # Cópia da matriz A
-    vetor_c_art = vetor_c + [0] * m
-
+    print("\n=== INÍCIO FASE I ===")
+    
+    # Base inicial: variáveis artificiais (garante matriz identidade)
+    base = []
     for i in range(m):
-        for j in range(m):
-            matriz_A_art[j].append(1 if j == i else 0)
+        # Procura coluna com 1 na linha i e 0 nas outras (variável artificial)
+        for j in range(n):
+            coluna = [matriz_A[k][j] for k in range(m)]
+            if abs(coluna[i] - 1) < TOLERANCIA and all(abs(coluna[k]) < TOLERANCIA for k in range(m) if k != i):
+                base.append(j)
+                break
+    
+    # Se não encontrou todas as variáveis artificiais, tenta as últimas colunas
+    if len(base) != m:
+        base = [j for j in range(n) if j >= n - m]
+    
+    # Verifica se a base é válida
+    if not base_valida(matriz_A, base, m):
+        print("Não foi possível encontrar base inicial válida para Fase I")
+        return None, None, "infactível"
 
-    base_inicial = list(range(n, n + m))
+    while iteracao <= MAX_TENTATIVAS_BASE:
+        print(f"\n--- Iteração {iteracao} ---")
+        print(f"Base atual: {base}")
 
-    return matriz_A_art, vetor_b[:], vetor_c_art, base_inicial
+        # Passo 1: Calcular solução básica
+        B = [[matriz_A[i][j] for j in base] for i in range(m)]
+        try:
+            B_inv = calcular_inversa(B)
+        except ValueError:
+            print("Matriz básica singular. Tentando outra base...")
+            # Tenta encontrar outra base válida
+            for tentativa in range(1, MAX_TENTATIVAS_BASE):
+                base_candidata = random.sample(range(n), m)
+                if base_valida(matriz_A, base_candidata, m):
+                    base = base_candidata
+                    print(f"Nova base encontrada: {base}")
+                    B_inv = calcular_inversa([[matriz_A[i][j] for j in base] for i in range(m)])
+                    break
+            else:
+                print("Não foi possível encontrar base viável após várias tentativas")
+                return None, None, "infactível"
+            continue
 
-def verificar_artificiais_na_base(base, n_original):
-    return any(ind >= n_original for ind in base)
+        x_B = [sum(B_inv[i][k] * vetor_b[k] for k in range(m)) for i in range(m)]
+        solucao = [0] * n
+        for i, j in enumerate(base):
+            solucao[j] = x_B[i]
+
+        print(f"Solução básica: {[round(x, 4) for x in solucao]}")
+        valor_objetivo = sum(vetor_c[j] * solucao[j] for j in range(n))
+        print(f"Valor objetivo Fase I: {round(valor_objetivo, 4)}")
+
+        # Passo 2: Calcular custos relativos
+        c_B = [vetor_c[j] for j in base]
+        lambda_ = [sum(c_B[k] * B_inv[k][i] for k in range(m)) for i in range(m)]
+        
+        nao_base = [j for j in range(n) if j not in base]
+        custos_relativos = {
+            j: vetor_c[j] - sum(lambda_[i] * matriz_A[i][j] for i in range(m))
+            for j in nao_base
+        }
+
+        print(f"Custos relativos: {[(j, round(cr, 4)) for j, cr in custos_relativos.items()]}")
+
+        # Passo 3: Teste de otimalidade
+        j_entra = min(custos_relativos.items(), key=lambda item: item[1])[0]
+        if custos_relativos[j_entra] >= -TOLERANCIA:
+            print("\nFase I concluída - Teste de otimalidade satisfeito")
+            
+            # Verifica se o valor objetivo é próximo de zero (problema factível)
+            if abs(valor_objetivo) > TOLERANCIA:
+                print(f"Valor objetivo Fase I = {round(valor_objetivo, 6)} (≠ 0). Problema infactível.")
+                return None, None, "infactível"
+            else:
+                print(f"Valor objetivo Fase I = {round(valor_objetivo, 6)} (≈ 0). Problema factível.")
+
+            
+            # Remove variáveis artificiais da base
+            artificiais_na_base = [j for j in base if j >= n - m]
+            if artificiais_na_base:
+                # Tenta substituir variáveis artificiais por variáveis originais
+                for j_art in artificiais_na_base:
+                    i = base.index(j_art)
+                    # Procura variável não artificial para entrar na base
+                    for j in range(n - m):  # Considera apenas variáveis originais
+                        if j not in base and abs(matriz_A[i][j]) > TOLERANCIA:
+                            base[i] = j
+                            break
+                
+                # Verifica se ainda há artificiais na base
+                if any(j >= n - m for j in base):
+                    print("Não foi possível remover todas as variáveis artificiais. Problema pode ser infactível.")
+                    return None, None, "infactível"
+            
+            print(f"Base para Fase II: {base}")
+            return solucao[:n - m], base, "factível"
+
+        # Passo 4: Calcular direção simplex
+        y = [sum(B_inv[i][k] * matriz_A[k][j_entra] for k in range(m)) for i in range(m)]
+
+        # Passo 5: Determinar variável que sai
+        razoes = {}
+        for i in range(m):
+            if y[i] > TOLERANCIA:
+                razoes[i] = x_B[i] / y[i]
+        
+        if not razoes:
+            print("Problema ilimitado na Fase I")
+            return None, None, "ilimitado"
+        
+        # Prioriza saída de variáveis artificiais
+        i_sai_candidatos = [i for i in razoes if base[i] >= n - m]  # Artificiais
+        if not i_sai_candidatos:
+            i_sai_candidatos = list(razoes.keys())
+        
+        i_sai = min(i_sai_candidatos, key=lambda i: razoes[i])
+        j_sai = base[i_sai]
+
+        print(f"Variável que entra: x{j_entra}, que sai: x{j_sai}")
+
+        # Passo 6: Atualizar base
+        base[i_sai] = j_entra
+        iteracao += 1
+
+    print("Número máximo de iterações na Fase I atingido")
+    return None, None, "infactível"
+
+def executar_fase2(vetor_c, matriz_A, vetor_b, base_inicial, tipos_restricao):
+    m = len(matriz_A)
+    n = len(matriz_A[0])
+    iteracao = 1
+    base = base_inicial.copy()
+
+    print("\n=== INÍCIO FASE II ===")
+
+    while iteracao <= MAX_TENTATIVAS_BASE:
+        print(f"\n--- Iteração {iteracao} ---")
+        print(f"Base atual: {base}")
+
+        # Passo 1: Calcular solução básica
+        B = [[matriz_A[i][j] for j in base] for i in range(m)]
+        try:
+            B_inv = calcular_inversa(B)
+        except ValueError:
+            print("Matriz básica singular. Tentando outra base...")
+            # Tenta encontrar outra base válida
+            for tentativa in range(1, MAX_TENTATIVAS_BASE):
+                base_candidata = random.sample(range(n), m)
+                if base_valida(matriz_A, base_candidata, m):
+                    base = base_candidata
+                    print(f"Nova base encontrada: {base}")
+                    B_inv = calcular_inversa([[matriz_A[i][j] for j in base] for i in range(m)])
+                    break
+            else:
+                print("Não foi possível encontrar base viável após várias tentativas")
+                return None, None, "erro"
+            continue
+
+        x_B = [sum(B_inv[i][k] * vetor_b[k] for k in range(m)) for i in range(m)]
+        solucao = [0] * n
+        for i, j in enumerate(base):
+            solucao[j] = x_B[i]
+
+        print(f"Solução básica: {[round(x, 4) for x in solucao]}")
+        valor_objetivo = sum(vetor_c[j] * solucao[j] for j in range(n))
+        print(f"Valor objetivo atual: {round(valor_objetivo, 4)}")
+
+        # Passo 2: Calcular custos relativos
+        c_B = [vetor_c[j] for j in base]
+        lambda_ = [sum(c_B[k] * B_inv[k][i] for k in range(m)) for i in range(m)]
+        
+        nao_base = [j for j in range(n) if j not in base]
+        custos_relativos = {
+            j: vetor_c[j] - sum(lambda_[i] * matriz_A[i][j] for i in range(m))
+            for j in nao_base
+        }
+
+        print(f"Custos relativos: {[(j, round(cr, 4)) for j, cr in custos_relativos.items()]}")
+
+        # Passo 3: Teste de otimalidade
+        j_entra = min(custos_relativos.items(), key=lambda item: item[1])[0]
+        if custos_relativos[j_entra] >= -TOLERANCIA:
+            print("\nSolução ótima encontrada!")
+            return solucao, valor_objetivo, "ótimo"
+
+        # Passo 4: Calcular direção simplex
+        y = [sum(B_inv[i][k] * matriz_A[k][j_entra] for k in range(m)) for i in range(m)]
+
+        # Passo 5: Determinar variável que sai
+        razoes = {}
+        for i in range(m):
+            if y[i] > TOLERANCIA:
+                razoes[i] = x_B[i] / y[i]
+        
+        if not razoes:
+            print("Problema ilimitado")
+            return None, None, "ilimitado"
+        
+        i_sai = min(razoes.items(), key=lambda item: item[1])[0]
+        j_sai = base[i_sai]
+
+        print(f"Variável que entra: x{j_entra}, que sai: x{j_sai}")
+
+        # Passo 6: Atualizar base
+        base[i_sai] = j_entra
+        iteracao += 1
+
+    print("Número máximo de iterações na Fase II atingido")
+    return None, None, "erro"
+
+def adicionar_variaveis_artificiais(matriz_A, vetor_b, vetor_c, tipos_restricao):
+    m = len(matriz_A)
+    n_original = len(matriz_A[0])
+    
+    # Matriz aumentada com variáveis artificiais
+    matriz_A_art = [linha.copy() for linha in matriz_A]
+    
+    # Contador de variáveis artificiais adicionadas
+    num_artificiais = 0
+    indices_artificiais = []
+    
+    for i in range(m):
+        if tipos_restricao[i] in [">=", "=", ">"]:
+            # Adiciona variável artificial (coluna com 1 na linha i e 0 nas outras)
+            for j in range(len(matriz_A_art)):
+                if j == i:
+                    matriz_A_art[j].append(1)
+                else:
+                    matriz_A_art[j].append(0)
+            indices_artificiais.append(n_original + num_artificiais)
+            num_artificiais += 1
+        else:
+            # Para restrições "<=", apenas estende com zeros
+            for linha in matriz_A_art:
+                linha.append(0)
+    
+    # Vetor de custos: 0 para originais e folgas, 1 para artificiais
+    vetor_c_art = [0] * (len(matriz_A_art[0]) - num_artificiais) + [1] * num_artificiais
+    
+    return matriz_A_art, vetor_b, vetor_c_art, indices_artificiais
