@@ -30,7 +30,7 @@ Min f(x) = -x1 + 2x2
 3x1 + 4x2 <= 5
 x1 - x2 <=2
 
-1_g site: 5, meu codigo: 0.3225806451612905
+1_g essa tem que dar errado(ilimitado)
 Min f(x) = -x1 + 2x2
 x1 + x2 >= 1
 -5x1 + 2x2 >= -10
@@ -67,7 +67,7 @@ x2 <=5
 3x1 + 2x3>= 6
 x1 + x2 <=10
 
-1_m 16 , mas não deveria ser infactivel?, se for >= o meu da 16
+1_m infactivel
 Max f(x1, x2) = 4x1 + 3x2
 x1 + 3x2<=7
 2x1 + 2x2 = 8
@@ -103,14 +103,14 @@ x2 <= 5
 3x1 + 2x3 >= 6
 x1 + x2 <= 10
 
-2_f 16, porem o meu só gera 16 se for >= e não <=
+2_f ilimitado
 Max f(x) = 4x1 + 3x2
 x1 + 3x2 <= 7
 2x1 + 2x2 = 8
 x1 + x2 <= -3
 x2 <= 2
 
-2_g deveria dar 36, meu codigo: 8
+2_g essa tem que dar errado(ilimitado)
 Max f(x) = 4x1 + 8x2
 3x1 + 2x2 = 18
 x1 + x2 <= 5
@@ -132,3 +132,7 @@ Max Z = 4x1 + 5x2 + 9x3 + 11x4
 x1 + x2 + x3 + x4 <= 15
 7x1 + 5x2 + 3x3 + 2x4 <= 120
 3x1 + 5x2 + 10x3 + 15x4 <= 100
+
+Min z = -5x1 - 3x2
+3x1 + 5x2 <= 15
+5x1 + 2x2 <= 10
